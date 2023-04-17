@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: taa
+  name: taa-dpl
+  namespace: taa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taa
+  template:
+    metadata:
+      labels:
+        app: taa
+      namespace: taa
+    spec:
+      containers:
+      - name: taa-nginx
+        image: baotd123/nginx
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "0.5"
+          requests:
+            memory: 256Mi
+            cpu: "0.2"
+      - name: taa-php
+        image: baotd123/php-fpm
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: taa-cfm
+              key: db_host
+        - name: DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: taa-cfm
+              key: db_name
+        - name: DB_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: taa-cfm
+              key: db_user
+        - name: DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: taa-cfm
+              key: db_password
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "0.5"
+          requests:
+            memory: 256Mi
+            cpu: "0.2"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taa-svc
+  namespace: taa
+spec:
+  type: NodePort
+  selector:
+    app: taa
+  ports:
+    - protocol: TCP
+      nodePort: 30001
+      port: 80
+      targetPort: 80
+
